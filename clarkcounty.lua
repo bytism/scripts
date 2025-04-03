@@ -66,20 +66,7 @@ function HookFirearm(Module)
             
     local OldFire; OldFire = hookfunction(Result.Fire, newcclosure(function(Data, Mouse)
         Data.ToolTable.Recoil = 0; Data.ToolTable.Spread = 0
-
-        if getgenv().Settings.Redirect.Enabled then
-            local Random = math.random(100)
-
-            if Random > getgenv().Settings.Redirect.Chance then
-                local Closest = GetClosest()
-
-                if Closest then
-                    local Head = Closest.Character.Head
-                    return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
-                end
-            end
-        end
-
+        print(getgenv().Settings.Redirect.Enabled, getgenv().Settings.Redirect.Chance)
         return OldFire(Data, Mouse)
     end))
 
