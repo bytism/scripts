@@ -7,6 +7,8 @@
     loadstring(game:HttpGet('https://raw.githubusercontent.com/bytism/scripts/main/clarkcounty.lua'))()
 
     a good legit chance % is ~10 with decent aim
+    adding get closest visible limb (from mouse) for hit part soon and toggles for weapon and redirect, 
+    
 ]]
 
 if Settings then return end
@@ -98,7 +100,7 @@ function HookFirearm(Module)
     if isfunctionhooked(Result.Fire) then return Result end
             
     local OldFire; OldFire = hookfunction(Result.Fire, newcclosure(function(Data, Mouse)
-        Data.ToolTable.Recoil = 0; Data.ToolTable.Spread = 0
+        Data.ToolTable.Recoil = Settings.Weapon.Recoil; Data.ToolTable.Spread = Settings.Weapon.Spread
 
         local Random = math.random(100)
 
