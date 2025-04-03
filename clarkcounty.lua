@@ -8,7 +8,7 @@
 
     a good legit chance % is ~10 with decent aim
     adding get closest visible limb (from mouse) for hit part soon and toggles for weapon and redirect, 
-    
+    take my module hook!
 ]]
 
 if Settings then return end
