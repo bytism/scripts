@@ -1,3 +1,14 @@
+--[[
+    getgenv().Settings = {
+        Redirect = {Chance = 100},
+        Weapon = {Recoil = 0, Spread = 0}
+    }
+    
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/bytism/scripts/main/clarkcounty.lua'))()
+]]
+
+if Settings then return end
+
 local FastFlag = getfflag('DebugRunParallelLuaOnMainThread')
 
 if FastFlag == 'false' then
@@ -7,16 +18,23 @@ end
 
 local Players = game:GetService('Players')
 local RunService = game:GetService('RunService')
+local CollectionService = game:GetService('CollectionService')
 local UserInputService = game:GetService('UserInputService')
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 local MouseLocation = UserInputService:GetMouseLocation()
 
+local RaycastParams = RaycastParams.new()
+RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+RaycastParams.FilterDescendantsInstances = {
+    LocalPlayer.Character, CollectionService:GetTagged('Glass')
+}
+
 local Circle = Drawing.new('Circle')
 Circle.Color = Color3.new(1, 1, 1)
 Circle.Visible = true
-Circle.Radius = 120
+Circle.Radius = 180
 
 function GetClosest()
     local ClosestPlayer = nil
@@ -46,6 +64,19 @@ function GetClosest()
     return ClosestPlayer, ClosestDistance
 end
 
+function IsVisible(Position)
+	local Vector, OnScreen = Camera:WorldToScreenPoint(Position)
+
+	if OnScreen then
+		local Origin = Camera.CFrame.Position
+		local Direction = (Position - Origin).Unit * (Position - Origin).Magnitude
+
+		return Workspace:Raycast(Origin, Direction, RaycastParams)
+	end
+
+	return false
+end
+
 function GetModule(Name)
     for _, Module in pairs(getloadedmodules()) do
         if Module.Name == Name then
@@ -66,7 +97,21 @@ function HookFirearm(Module)
             
     local OldFire; OldFire = hookfunction(Result.Fire, newcclosure(function(Data, Mouse)
         Data.ToolTable.Recoil = 0; Data.ToolTable.Spread = 0
-        print(getgenv().Settings.Redirect.Enabled, getgenv().Settings.Redirect.Chance)
+
+        local Random = math.random(100)
+
+        if Random < Settings.Redirect.Chance then
+            local Closest = GetClosest()
+
+            if Closest then
+                local Head = Closest.Character:FindFirstChild('Head')
+
+                if Head and IsVisible(Head.Position) then
+                    return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
+                end
+            end
+        end
+
         return OldFire(Data, Mouse)
     end))
 
@@ -76,6 +121,12 @@ end
 RunService.RenderStepped:Connect(function()
     MouseLocation = UserInputService:GetMouseLocation()
     Circle.Position = MouseLocation
+end)
+
+CollectionService:GetInstanceAddedSignal('Glass'):Connect(function()
+    RaycastParams.FilterDescendantsInstances = {
+        LocalPlayer.Character, CollectionService:GetTagged('Glass')
+    }
 end)
 
 local OldRequire; OldRequire = hookfunction(getrenv().require, newcclosure(function(Module)
