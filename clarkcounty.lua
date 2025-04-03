@@ -7,7 +7,7 @@
     loadstring(game:HttpGet('https://raw.githubusercontent.com/bytism/scripts/main/clarkcounty.lua'))()
 
     a good legit chance % is ~10 with decent aim
-    adding get closest visible limb (from mouse) for hit part soon and toggles for weapon and redirect, 
+    adding get closest visible limb (from mouse) for hit part soon and toggles for weapon and redirect, that restores weapon mods to original state
     take my module hook!
 ]]
 
