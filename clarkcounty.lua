@@ -64,12 +64,13 @@ function HookFirearm(Module)
             local Random = math.random(100)
 
             if Random > Settings.Redirect.Chance then
-                local Closest = GetClosest()
+                print(Random)
+                -- local Closest = GetClosest()
 
-                if Closest then
-                    local Head = Closest.Character.Head
-                    return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
-                end
+                -- if Closest then
+                --     local Head = Closest.Character.Head
+                --     return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
+                -- end
             end
         end
 
