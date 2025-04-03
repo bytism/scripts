@@ -69,7 +69,7 @@ function GetClosest()
 end
 
 function IsVisible(Position)
-	local Vector, OnScreen = Camera:WorldToScreenPoint(Position)
+    local Vector, OnScreen = Camera:WorldToScreenPoint(Position)
     if not OnScreen then return false end
 
     local Origin = Camera.CFrame.Position
