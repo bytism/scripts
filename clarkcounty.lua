@@ -61,11 +61,15 @@ function HookFirearm(Module)
         Data.ToolTable.Recoil = 0; Data.ToolTable.Spread = 0
 
         if Settings.Redirect.Enabled then
-            local Closest = GetClosest()
+            local Random = math.random(100)
 
-            if Closest then
-                local Head = Closest.Character.Head
-                return Old(Data, {Hit = {p = Head.Position}, Target = Head})
+            if Random > Settings.Redirect.Chance then
+                local Closest = GetClosest()
+
+                if Closest then
+                    local Head = Closest.Character.Head
+                    return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
+                end
             end
         end
 
