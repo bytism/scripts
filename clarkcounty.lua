@@ -5,6 +5,8 @@
     }
     
     loadstring(game:HttpGet('https://raw.githubusercontent.com/bytism/scripts/main/clarkcounty.lua'))()
+
+    a good legit chance % is ~10 with decent aim
 ]]
 
 if Settings then return end
