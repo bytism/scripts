@@ -1,3 +1,10 @@
+local FastFlag = getfflag('DebugRunParallelLuaOnMainThread')
+
+if FastFlag == 'false' then
+    setfflag('DebugRunParallelLuaOnMainThread', 'True')
+    game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+end
+
 local Players = game:GetService('Players')
 local RunService = game:GetService('RunService')
 local UserInputService = game:GetService('UserInputService')
@@ -60,17 +67,16 @@ function HookFirearm(Module)
     local OldFire; OldFire = hookfunction(Result.Fire, newcclosure(function(Data, Mouse)
         Data.ToolTable.Recoil = 0; Data.ToolTable.Spread = 0
 
-        if Settings.Redirect.Enabled then
+        if getgenv().Settings.Redirect.Enabled then
             local Random = math.random(100)
 
-            if Random > Settings.Redirect.Chance then
-                print(Random)
-                -- local Closest = GetClosest()
+            if Random > getgenv().Settings.Redirect.Chance then
+                local Closest = GetClosest()
 
-                -- if Closest then
-                --     local Head = Closest.Character.Head
-                --     return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
-                -- end
+                if Closest then
+                    local Head = Closest.Character.Head
+                    return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
+                end
             end
         end
 
