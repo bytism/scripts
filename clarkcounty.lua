@@ -70,15 +70,12 @@ end
 
 function IsVisible(Position)
 	local Vector, OnScreen = Camera:WorldToScreenPoint(Position)
+    if not OnScreen then return false end
 
-	if OnScreen then
-		local Origin = Camera.CFrame.Position
-		local Direction = (Position - Origin).Unit * (Position - Origin).Magnitude
+    local Origin = Camera.CFrame.Position
+    local Direction = (Position - Origin).Unit * (Position - Origin).Magnitude
 
-		return Workspace:Raycast(Origin, Direction, RaycastParams)
-	end
-
-	return false
+    return Workspace:Raycast(Origin, Direction, RaycastParams)
 end
 
 function GetModule(Name)
@@ -143,7 +140,4 @@ local OldRequire; OldRequire = hookfunction(getrenv().require, newcclosure(funct
 end))
 
 local Firearm = GetModule('Firearm')
-
-if Firearm then
-    HookFirearm(Firearm)
-end
+if Firearm then HookFirearm(Firearm) end
