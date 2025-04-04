@@ -11,6 +11,13 @@
     skid more
 ]]
 
+--[[
+    getgenv().Settings = {
+        Redirect = {Chance = 100},
+        Weapon = {Recoil = 0, Spread = 0}
+    }
+]]
+
 if Settings then return end
 
 local FastFlag = getfflag('DebugRunParallelLuaOnMainThread')
@@ -23,6 +30,7 @@ end
 local Players = game:GetService('Players')
 local RunService = game:GetService('RunService')
 local CollectionService = game:GetService('CollectionService')
+local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local UserInputService = game:GetService('UserInputService')
 
 local LocalPlayer = Players.LocalPlayer
@@ -39,6 +47,25 @@ local Circle = Drawing.new('Circle')
 Circle.Color = Color3.new(1, 1, 1)
 Circle.Visible = true
 Circle.Radius = 180
+
+local Tools = require(ReplicatedStorage.Databases.Tools)
+
+function DeepCopy(Original)
+    if type(Original) ~= 'table' then return Original end
+    
+    local Copy = {}
+    
+    for Index, Value in pairs(Original) do
+        if type(Value) == 'table' then
+            Copy[Index] = DeepCopy(Value)
+        else
+            Copy[Index]
+        end
+    end
+    
+    return Copy
+end
+
 
 function GetClosest()
     local ClosestPlayer = nil
@@ -97,7 +124,19 @@ function HookFirearm(Module)
     if isfunctionhooked(Result.Fire) then return Result end
             
     local OldFire; OldFire = hookfunction(Result.Fire, newcclosure(function(Data, Mouse)
-        Data.ToolTable.Recoil = Settings.Weapon.Recoil; Data.ToolTable.Spread = Settings.Weapon.Spread
+        local SettingsRecoil, SettingsSpread = Settings.Weapon.Recoil, Data.ToolTable.Spread
+
+        if SettingsRecoil == -1 then
+            Data.ToolTable.Recoil = Tools[Data.ToolTable.Asset].Recoil
+        else
+            Data.ToolTable.Recoil = SettingsRecoil
+        end
+
+        if SettingsSpread == -1 then
+            Data.ToolTable.Spread = Tools[Data.ToolTable.Asset].Spread
+        else
+            Data.ToolTable.Spread = SettingsSpread
+        end
 
         local Random = math.random(100)
 
