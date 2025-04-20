@@ -6,6 +6,7 @@ local FastFlag = getfflag('DebugRunParallelLuaOnMainThread')
 if FastFlag == 'false' then
     setfflag('DebugRunParallelLuaOnMainThread', 'True')
     game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+    return
 end
 
 local Players = game:GetService('Players')
