@@ -1,3 +1,12 @@
+--[[
+    getgenv().Settings = {
+        Redirect = {Chance = 100}, -- set to 0 to disable
+        Weapon = {Recoil = 0, Spread = 0} -- set to -1 to disable
+    }
+    
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/bytism/scripts/main/clarkcounty_aimbot.lua'))()
+]]
+
 if Settings and Settings.Loaded then return end
 Settings.Loaded = true
 
