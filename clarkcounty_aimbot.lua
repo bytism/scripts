@@ -32,12 +32,8 @@ local RaycastParams = RaycastParams.new()
 RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 RaycastParams.FilterDescendantsInstances = {LocalPlayer.Character or nil, CollectionService:GetTagged('Glass')}
 
-local Circle = Drawing.new('Circle')
-Circle.Color = Color3.new(1, 1, 1)
-Circle.Visible = true
-Circle.Radius = 180
-
-local Tools = {}
+local Tools = nil
+local Target = nil
 
 function DeepCopy(Original)
     if type(Original) ~= 'table' then return Original end
@@ -53,6 +49,16 @@ function DeepCopy(Original)
     end
     
     return Copy
+end
+
+function AddDrawing(Type, Properties)
+    local DrawingObject = Drawing.new(Type)
+
+    for Property, Value in pairs(Properties) do
+        DrawingObject[Property] = Value
+    end
+
+    return DrawingObject
 end
 
 function GetClosest()
@@ -73,7 +79,7 @@ function GetClosest()
 
         local MouseDistance = (Vector2.new(Vector.X, Vector.Y) - MouseLocation).Magnitude
         
-        if MouseDistance > Circle.Radius then continue end
+        if MouseDistance > 180 then continue end
         if MouseDistance > ClosestDistance then continue end
 
         ClosestPlayer = Player
@@ -83,69 +89,73 @@ function GetClosest()
     return ClosestPlayer, ClosestDistance
 end
 
-function IsVisible(Position)
-    local Vector, OnScreen = Camera:WorldToScreenPoint(Position)
+function IsVisible(Part)
+    local Vector, OnScreen = Camera:WorldToScreenPoint(Part.Position)
     if not OnScreen then return false end
 
     local Origin = Camera.CFrame.Position
-    local Direction = (Position - Origin).Unit * (Position - Origin).Magnitude
+    local Direction = (Part.Position - Origin).Unit * (Part.Position - Origin).Magnitude
 
-    return Workspace:Raycast(Origin, Direction, RaycastParams)
+    local Raycast = workspace:Raycast(Origin, Direction, RaycastParams)
+    if not Raycast.Instance:IsDescendantOf(Part.Parent) then return false end
+    
+    return true
 end
 
 function GetModule(Name)
     for _, Module in pairs(getloadedmodules()) do
-        if Module.Name == Name then
-            return Module
-        end
+        if Module.Name == Name then return Module end
     end
 
     return false
 end
 
-function HookFirearm(Module)
-    local Success, Result = pcall(function()
-        return require(Module)
-    end)
+local Indicator = AddDrawing('Text', {
+    Text = 'Target: None', Font = 3, Visible = true, Center = true, Outline = true,
+    Color = Color3.new(1, 1, 1), OutlineColor = Color3.new(0, 0, 0)
+})
 
-    if not Success then return false end
-    if isfunctionhooked(Result.Fire) then return Result end
-            
-    local OldFire; OldFire = hookfunction(Result.Fire, function(Data, Mouse)
-        Data.ToolTable.Recoil = Settings.Weapon.Recoil ~= -1 and Settings.Weapon.Recoil or Tools[Data.ToolTable.Asset].Recoil
-        Data.ToolTable.Spread = Settings.Weapon.Spread ~= -1 and Settings.Weapon.Spread or Tools[Data.ToolTable.Asset].Spread
-
-        if math.random(100) >= Settings.Redirect.Chance then return OldFire(Data, Mouse) end
-
-        local Closest = GetClosest()
-        if not Closest then return OldFire(Data, Mouse) end
-
-        local Head = Closest.Character:FindFirstChild('Head')
-        if not Head or not IsVisible(Head.Position) then return OldFire(Data, Mouse) end
-
-        return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
-    end)
-
-    return Result
-end
+local FovCircle = AddDrawing('Circle', {Visible = true, Radius = 180, Thickness = 1.5, Color = Color3.new(1, 1, 1), ZIndex = 4})
+local FovOutlineCircle = AddDrawing('Circle', {Visible = true, Radius = 180, Thickness = 3.5, Color = Color3.new(0, 0, 0), ZIndex = 3})
 
 Tools = DeepCopy(require(ReplicatedStorage.Databases.Tools))
 
+RunService.Heartbeat:Connect(function()
+    local Closest = GetClosest()
+    if not Closest then
+        Target = nil; Indicator.Text = 'None'; Indicator.Color = Color3.new(1, 1, 1)
+        return
+    end
+    
+    local Visible = IsVisible(Closest.Character.Head)
+    Indicator.Text = Closest.Name
+    Indicator.Color = Visible and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
+end)
+
 RunService.RenderStepped:Connect(function()
-    MouseLocation = UserInputService:GetMouseLocation(); Circle.Position = MouseLocation
+    MouseLocation = UserInputService:GetMouseLocation()
+
+    FovOutlineCircle.Position = MouseLocation; FovCircle.Position = MouseLocation
+    Indicator.Position = FovCircle.Position + Vector2.new(0, 185)
 end)
 
 CollectionService:GetInstanceAddedSignal('Glass'):Connect(function()
     RaycastParams.FilterDescendantsInstances = {LocalPlayer.Character or nil, CollectionService:GetTagged('Glass')}
 end)
 
-local OldRequire; OldRequire = hookfunction(getrenv().require, newcclosure(function(Module)
-    if Module.Name == 'Firearm' then
-        return HookFirearm(Module) or OldRequire(Module)
-    end
-
-    return OldRequire(Module)
-end))
-
 local Firearm = GetModule('Firearm')
-if Firearm then HookFirearm(Firearm) end
+if not Firearm then return end
+
+local Required = require(Firearm)
+local OldFire; OldFire = hookfunction(Required.Fire, function(Data, Mouse)
+    Data.ToolTable.Recoil = Settings.Weapon.Recoil ~= -1 and Settings.Weapon.Recoil or Tools[Data.ToolTable.Asset].Recoil
+    Data.ToolTable.Spread = Settings.Weapon.Spread ~= -1 and Settings.Weapon.Spread or Tools[Data.ToolTable.Asset].Spread
+
+    if math.random(100) >= Settings.Redirect.Chance then return OldFire(Data, Mouse) end
+    if not Target then return OldFire(Data, Mouse) end
+
+    local Head = Target.Character:FindFirstChild('Head')
+    if not Head or not IsVisible(Head) then return OldFire(Data, Mouse) end
+
+    return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
+end)
