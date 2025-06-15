@@ -1,3 +1,5 @@
+-- no longer works, they moved to luarmor 👎👎
+
 local Old; Old = hookfunction(http.request, function(Request)
     if Request.Method ~= 'POST' then return Old(Request) end
 
