@@ -127,8 +127,16 @@ RunService.Heartbeat:Connect(function()
         return
     end
     
-    local Visible = IsVisible(Closest.Character.Head)
-    Indicator.Text = Closest.Name
+    local Head = Closest.Character and Closest.Character:FindFirstChild('Head')
+    if not Head then
+        Target = nil; Indicator.Text = 'None'; Indicator.Color = Color3.new(1, 1, 1)
+        return
+    end
+
+    Target = Closest
+
+    local Visible = IsVisible(Head)
+    Indicator.Text = Target.Name
     Indicator.Color = Visible and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
 end)
 
@@ -144,8 +152,6 @@ CollectionService:GetInstanceAddedSignal('Glass'):Connect(function()
 end)
 
 local Firearm = GetModule('Firearm')
-if not Firearm then return end
-
 local Required = require(Firearm)
 local OldFire; OldFire = hookfunction(Required.Fire, function(Data, Mouse)
     Data.ToolTable.Recoil = Settings.Weapon.Recoil ~= -1 and Settings.Weapon.Recoil or Tools[Data.ToolTable.Asset].Recoil
