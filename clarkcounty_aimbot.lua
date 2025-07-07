@@ -65,7 +65,6 @@ end
 
 function GetClosest()
     local ClosestPlayer, ClosestLimb, ClosestDistance = nil, nil, math.huge
-    local MouseLocation = UserInputService:GetMouseLocation()
 
     for _, Player in pairs(Players:GetPlayers()) do
         if Player == LocalPlayer then continue end
