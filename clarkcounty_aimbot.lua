@@ -132,10 +132,8 @@ function HookFirearm(Module)
     local OldFire; OldFire = hookfunction(Required.Fire, function(Data, Mouse)
         Data.ToolTable.Recoil = Settings.Weapon.Recoil ~= -1 and Settings.Weapon.Recoil or Tools[Data.ToolTable.Asset].Recoil
         Data.ToolTable.Spread = Settings.Weapon.Spread ~= -1 and Settings.Weapon.Spread or Tools[Data.ToolTable.Asset].Spread
-
-        print('how')
+            
         if math.random(100) >= Settings.Redirect.Chance then return OldFire(Data, Mouse) end
-        print('dude')
         if not Target then return OldFire(Data, Mouse) end
 
         return OldFire(Data, {Hit = {p = TargetLimb.Position}, Target = TargetLimb})
