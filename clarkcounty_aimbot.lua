@@ -1,5 +1,6 @@
 --[[
     getgenv().Settings = {
+        Visual = {Fov = true, Indicator = true},
         Redirect = {Chance = 100}, -- set to 0 to disable
         Weapon = {Recoil = 0, Spread = 0} -- set to -1 to disable
     }
@@ -65,6 +66,7 @@ end
 
 function GetClosest()
     local ClosestPlayer, ClosestLimb, ClosestDistance = nil, nil, math.huge
+    local MouseLocation = UserInputService:GetMouseLocation()
 
     for _, Player in pairs(Players:GetPlayers()) do
         if Player == LocalPlayer then continue end
@@ -124,12 +126,12 @@ function GetModule(Name)
 end
 
 local Indicator = AddDrawing('Text', {
-    Text = 'Target: None', Font = 3, Visible = true, Center = true, Outline = true,
+    Text = 'Target: None', Font = 3, Visible = Settings.Visual.Indicator, Center = true, Outline = true,
     Color = Color3.new(1, 1, 1), OutlineColor = Color3.new(0, 0, 0)
 })
 
-local FovCircle = AddDrawing('Circle', {Visible = true, Radius = 180, Thickness = 1.5, Color = Color3.new(1, 1, 1), ZIndex = 4})
-local FovOutlineCircle = AddDrawing('Circle', {Visible = true, Radius = 180, Thickness = 3.5, Color = Color3.new(0, 0, 0), ZIndex = 3})
+local FovCircle = AddDrawing('Circle', {Visible = Settings.Visual.Fov, Radius = 180, Thickness = 1.5, Color = Color3.new(1, 1, 1), ZIndex = 4})
+local FovOutlineCircle = AddDrawing('Circle', {Visible = Settings.Visual.Fov, Radius = 180, Thickness = 3.5, Color = Color3.new(0, 0, 0), ZIndex = 3})
 
 Tools = DeepCopy(require(ReplicatedStorage.Databases.Tools))
 
@@ -158,6 +160,9 @@ RunService.RenderStepped:Connect(function()
 
     FovOutlineCircle.Position = MouseLocation; FovCircle.Position = MouseLocation
     Indicator.Position = FovCircle.Position + Vector2.new(0, 185)
+
+    FovOutlineCircle.Visible = Settings.Visual.Fov, FovCircle.Visible = Settings.Visual.Fov
+    Indicator.Visible = Settings.Visual.Indicator
 end)
 
 CollectionService:GetInstanceAddedSignal('Glass'):Connect(function()
