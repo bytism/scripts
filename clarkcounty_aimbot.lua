@@ -112,7 +112,7 @@ function IsVisible(Part)
     local Direction = (Part.Position - Origin).Unit * (Part.Position - Origin).Magnitude
 
     local Raycast = workspace:Raycast(Origin, Direction, RaycastParams)
-    if not Raycast.Instance:IsDescendantOf(Part.Parent) then return false end
+    if not Raycast or not Raycast.Instance:IsDescendantOf(Part.Parent) then return false end
     
     return true
 end
@@ -123,6 +123,25 @@ function GetModule(Name)
     end
 
     return false
+end
+
+function HookFirearm(Module)
+    local Required = require(Module)
+    if isfunctionhooked(Required.Fire) then return Required end
+
+    local OldFire; OldFire = hookfunction(Required.Fire, function(Data, Mouse)
+        Data.ToolTable.Recoil = Settings.Weapon.Recoil ~= -1 and Settings.Weapon.Recoil or Tools[Data.ToolTable.Asset].Recoil
+        Data.ToolTable.Spread = Settings.Weapon.Spread ~= -1 and Settings.Weapon.Spread or Tools[Data.ToolTable.Asset].Spread
+
+        print('how')
+        if math.random(100) >= Settings.Redirect.Chance then return OldFire(Data, Mouse) end
+        print('dude')
+        if not Target then return OldFire(Data, Mouse) end
+
+        return OldFire(Data, {Hit = {p = TargetLimb.Position}, Target = TargetLimb})
+    end)
+
+    return Required
 end
 
 local Indicator = AddDrawing('Text', {
@@ -170,15 +189,13 @@ CollectionService:GetInstanceAddedSignal('Glass'):Connect(function()
 end)
 
 local Firearm = GetModule('Firearm')
+
+if not Firearm then
+    local OldRequire; OldRequire = hookfunction(getrenv().require, function(Module)
+        if Module.Name ~= 'Firearm' then return OldRequire(Module) end
+        return HookFirearm(Module) or OldRequire(Module)
+    end)
+end
+
 local Required = require(Firearm)
-local OldFire; OldFire = hookfunction(Required.Fire, function(Data, Mouse)
-    Data.ToolTable.Recoil = Settings.Weapon.Recoil ~= -1 and Settings.Weapon.Recoil or Tools[Data.ToolTable.Asset].Recoil
-    Data.ToolTable.Spread = Settings.Weapon.Spread ~= -1 and Settings.Weapon.Spread or Tools[Data.ToolTable.Asset].Spread
-
-    if math.random(100) >= Settings.Redirect.Chance then return OldFire(Data, Mouse) end
-    if not Target then return OldFire(Data, Mouse) end
-
-    if not TargetLimb or not IsVisible(TargetLimb) then return OldFire(Data, Mouse) end
-
-    return OldFire(Data, {Hit = {p = TargetLimb.Position}, Target = TargetLimb})
-end)
+HookFirearm(Firearm)
