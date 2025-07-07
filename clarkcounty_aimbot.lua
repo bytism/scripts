@@ -26,14 +26,16 @@ local UserInputService = game:GetService('UserInputService')
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
-local MouseLocation = UserInputService:GetMouseLocation()
+local Mouse = LocalPlayer:GetMouse()
 
 local RaycastParams = RaycastParams.new()
 RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 RaycastParams.FilterDescendantsInstances = {LocalPlayer.Character or nil, CollectionService:GetTagged('Glass')}
 
+local Limbs = {'Head', 'Torso', 'Left Arm', 'Right Arm', 'Left Leg', 'Right Leg'}
+
 local Tools = nil
-local Target = nil
+local Target, TargetLimb = nil, nil
 
 function DeepCopy(Original)
     if type(Original) ~= 'table' then return Original end
@@ -62,8 +64,8 @@ function AddDrawing(Type, Properties)
 end
 
 function GetClosest()
-    local ClosestPlayer = nil
-    local ClosestDistance = math.huge
+    local ClosestPlayer, ClosestLimb, ClosestDistance = nil, nil, math.huge
+    local MouseLocation = UserInputService:GetMouseLocation()
 
     for _, Player in pairs(Players:GetPlayers()) do
         if Player == LocalPlayer then continue end
@@ -74,26 +76,38 @@ function GetClosest()
         local PlayerHumanoid = Player.Character:FindFirstChild('Humanoid')
         if not PlayerHumanoid or PlayerHumanoid.Health < 0 then continue end
 
-        local Vector, OnScreen = Camera:WorldToScreenPoint(PlayerRoot.Position)
-        if not OnScreen then continue end
+        for _, Limb in pairs(Player.Character:GetChildren()) do
+            if not table.find(Limbs, Limb.Name) then continue end
 
-        local MouseDistance = (Vector2.new(Vector.X, Vector.Y) - MouseLocation).Magnitude
-        
-        if MouseDistance > 180 then continue end
-        if MouseDistance > ClosestDistance then continue end
+            local Vector, OnScreen = Camera:WorldToScreenPoint(Limb.Position)
+            if not OnScreen then continue end
 
-        ClosestPlayer = Player
-        ClosestDistance = MouseDistance
+            local MouseDistance = (Vector2.new(Vector.X, Vector.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+            if MouseDistance > 180 then continue end
+            if MouseDistance > ClosestDistance then continue end
+
+            ClosestPlayer = Player
+            ClosestLimb = Limb
+            ClosestDistance = MouseDistance
+        end
     end
 
-    return ClosestPlayer, ClosestDistance
+    return ClosestPlayer, ClosestLimb, ClosestDistance
 end
 
 function IsVisible(Part)
+    local function GetBarrel()
+        local Tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA('Configuration')
+        if not Tool or not Tool:FindFirstChild('Barrel') then return false end
+        return Tool.Barrel
+    end
+
+    local Barrel = GetBarrel()
+
     local Vector, OnScreen = Camera:WorldToScreenPoint(Part.Position)
     if not OnScreen then return false end
 
-    local Origin = Camera.CFrame.Position
+    local Origin = Barrel and Barrel.CFrame.Position or Camera.CFrame.Position
     local Direction = (Part.Position - Origin).Unit * (Part.Position - Origin).Magnitude
 
     local Raycast = workspace:Raycast(Origin, Direction, RaycastParams)
@@ -121,22 +135,22 @@ local FovOutlineCircle = AddDrawing('Circle', {Visible = true, Radius = 180, Thi
 Tools = DeepCopy(require(ReplicatedStorage.Databases.Tools))
 
 RunService.Heartbeat:Connect(function()
-    local Closest = GetClosest()
-    if not Closest then
+    local Player, Limb = GetClosest()
+    if not Player then
         Target = nil; Indicator.Text = 'None'; Indicator.Color = Color3.new(1, 1, 1)
         return
     end
     
-    local Head = Closest.Character and Closest.Character:FindFirstChild('Head')
+    local Head = Player.Character and Player.Character:FindFirstChild('Head')
     if not Head then
         Target = nil; Indicator.Text = 'None'; Indicator.Color = Color3.new(1, 1, 1)
         return
     end
 
-    Target = Closest
+    Target = Player; TargetLimb = Limb
 
     local Visible = IsVisible(Head)
-    Indicator.Text = Target.Name
+    Indicator.Text = string.format('%s; %s', Player.Name, Limb.Name)
     Indicator.Color = Visible and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
 end)
 
@@ -160,8 +174,7 @@ local OldFire; OldFire = hookfunction(Required.Fire, function(Data, Mouse)
     if math.random(100) >= Settings.Redirect.Chance then return OldFire(Data, Mouse) end
     if not Target then return OldFire(Data, Mouse) end
 
-    local Head = Target.Character:FindFirstChild('Head')
-    if not Head or not IsVisible(Head) then return OldFire(Data, Mouse) end
+    if not TargetLimb or not IsVisible(TargetLimb) then return OldFire(Data, Mouse) end
 
-    return OldFire(Data, {Hit = {p = Head.Position}, Target = Head})
+    return OldFire(Data, {Hit = {p = TargetLimb.Position}, Target = TargetLimb})
 end)
