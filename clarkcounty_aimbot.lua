@@ -161,7 +161,7 @@ RunService.RenderStepped:Connect(function()
     FovOutlineCircle.Position = MouseLocation; FovCircle.Position = MouseLocation
     Indicator.Position = FovCircle.Position + Vector2.new(0, 185)
 
-    FovOutlineCircle.Visible = Settings.Visual.Fov, FovCircle.Visible = Settings.Visual.Fov
+    FovOutlineCircle.Visible = Settings.Visual.Fov; FovCircle.Visible = Settings.Visual.Fov
     Indicator.Visible = Settings.Visual.Indicator
 end)
 
