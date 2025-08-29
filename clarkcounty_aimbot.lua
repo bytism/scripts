@@ -6,6 +6,8 @@
     }
     
     loadstring(game:HttpGet('https://raw.githubusercontent.com/bytism/scripts/main/clarkcounty_aimbot.lua'))()
+
+    rewrite soon!!!!!!!
 ]]
 
 if Settings and Settings.Loaded then return end
